@@ -59,9 +59,7 @@ export default function Home() {
     setResultUrl(null);
     setElapsed(0);
     setDebugMsg(null);
-
     try {
-      // Step 1: Get presigned URL
       setDebugMsg("Getting upload URL...");
       const presignRes = await fetch("/api/upload/presign", {
         method: "POST",
@@ -70,8 +68,6 @@ export default function Home() {
       });
       if (!presignRes.ok) throw new Error(`Presign failed: ${presignRes.status}`);
       const { uploadUrl, publicUrl } = await presignRes.json();
-
-      // Step 2: Upload to R2
       setDebugMsg("Uploading photo...");
       const uploadResult = await fetch(uploadUrl, {
         method: "PUT",
@@ -79,22 +75,14 @@ export default function Home() {
         headers: { "Content-Type": personImage.type },
       });
       if (!uploadResult.ok) throw new Error(`Upload failed: ${uploadResult.status}`);
-
-      // Step 3: Create try-on job
       setDebugMsg("Starting AI generation...");
       const jobRes = await fetch("/api/tryon/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          personImageUrl: publicUrl,
-          garmentImageUrl: garmentPreview,
-          garmentCategory,
-        }),
+        body: JSON.stringify({ personImageUrl: publicUrl, garmentImageUrl: garmentPreview, garmentCategory }),
       });
       if (!jobRes.ok) throw new Error(`Job creation failed: ${jobRes.status}`);
       const { jobId: newJobId } = await jobRes.json();
-
-      // Step 4: Poll for result
       setDebugMsg("Waiting for result...");
       let seconds = 0;
       const interval = setInterval(async () => {
@@ -195,8 +183,13 @@ export default function Home() {
                 </div>
               ) : (
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                  <p style={{ fontSize: 12, color: "var(--ink-muted)", marginBottom: 12, lineHeight: 1.6 }}>Find any clothing item online, right-click the image → <strong>"Copy Image Address"</strong> → paste below.</p>
-                  <p style={{ fontSize: 10, color: "var(--ink-muted)", marginBottom: 16, opacity: 0.6 }}>✓ Works with: ASOS, Unsplash<br />✗ May not work with: Zara, H&M, Nike</p>
+                  <p style={{ fontSize: 12, color: "var(--ink-muted)", marginBottom: 12, lineHeight: 1.6 }}>
+                    Find any clothing item online, right-click the image, select Copy Image Address, then paste below.
+                  </p>
+                  <p style={{ fontSize: 10, color: "var(--ink-muted)", marginBottom: 16, opacity: 0.6 }}>
+                    Works with: ASOS, Unsplash<br />
+                    May not work with: Zara, H&amp;M, Nike
+                  </p>
                   <input type="text" value={garmentUrl} onChange={(e) => setGarmentUrl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLoadGarment()} placeholder="https://..." style={{ width: "100%", padding: "10px 12px", fontSize: 12, border: "1px solid var(--border-strong)", background: "var(--cream-pale)", borderRadius: 2, outline: "none", fontFamily: "DM Sans, sans-serif", marginBottom: 8, boxSizing: "border-box" }} />
                   {garmentError && <p style={{ fontSize: 11, color: "#C1440E", marginBottom: 8 }}>{garmentError}</p>}
                   <button onClick={handleLoadGarment} style={{ width: "100%", padding: "10px", background: "var(--ink)", color: "var(--cream)", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", border: "none", borderRadius: 2, cursor: "pointer" }}>Load Image</button>
@@ -275,7 +268,7 @@ export default function Home() {
             </div>
             <div>
               <p style={{ fontSize: 13, fontWeight: 500, marginBottom: 6 }}>Getting image links</p>
-              <p style={{ fontSize: 12, color: "var(--ink-muted)", lineHeight: 1.7 }}>Right-click any product image → "Copy Image Address". Works best with ASOS.</p>
+              <p style={{ fontSize: 12, color: "var(--ink-muted)", lineHeight: 1.7 }}>Right-click any product image, select Copy Image Address. Works best with ASOS.</p>
             </div>
           </div>
         </div>
